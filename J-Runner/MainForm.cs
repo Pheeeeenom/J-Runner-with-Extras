@@ -2426,7 +2426,12 @@ namespace JRunner
             nand.getsmcconfig();
             Oper.savefile(nand._smc_config, Path.Combine(tmpout, "smc_config.bin"));
 
-            if (variables.ctype.ID == 1 || variables.ctype.ID == 10 || variables.ctype.ID == 11)
+            // 1 = Trinity
+            // 10, 11 = Corona
+            // 15, 16 = Winchester 
+            if (variables.ctype.ID == 1  ||
+                variables.ctype.ID == 10 || variables.ctype.ID == 11 ||
+                variables.ctype.ID == 15 || variables.ctype.ID == 16)
             {
                 byte[] t;
                 Console.WriteLine("Working...");
