@@ -2050,7 +2050,7 @@ namespace JRunner
                 variables.foundCoronaKeyFix = false;
 
                 FileStream fs = new FileStream(variables.filename1, FileMode.Open);
-                byte[] patchesByte = new byte[0x5B230];
+                byte[] patchesByte = new byte[0x5F230];
 
                 try
                 {
