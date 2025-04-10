@@ -405,17 +405,17 @@ namespace JRunner
                     // won't be able to close. Append today's date
                     // to the file path and reattempt the write.
                     Console.WriteLine("Couldn't write console log to " + file);
-                    Console.WriteLine(e.ToString() + " " + e.Message);
+                    Console.WriteLine(e.GetType().ToString() + " " + e.Message);
 
                     try
                     {
-                        file += DateTime.Now.ToString("yyyyMMdd");
+                        file += "." + DateTime.Now.ToString("yyyyMMdd");
                         File.AppendAllText(file, "\n" + txtConsole.Text);
                     }
                     catch
                     {
                         // If we failed at the reattempt, prompt the user if they wish to close without saving.
-                        DialogResult closingDialogResult = MessageBox.Show("Encountered " + e.ToString() + ". Unable to save console log. Close J-Runner?", "Error", MessageBoxButtons.YesNo, MessageBoxIcon.Error);
+                        DialogResult closingDialogResult = MessageBox.Show("Encountered " + e.GetType().ToString() + " writing to " + file + ". \n\nUnable to save console log. Close J-Runner?", "Error", MessageBoxButtons.YesNo, MessageBoxIcon.Error);
 
                         // If the user selected "no", re-throw the original exception
                         if (closingDialogResult == DialogResult.No)
