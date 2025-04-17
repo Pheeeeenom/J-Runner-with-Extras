@@ -409,7 +409,7 @@ namespace JRunner
 
                     try
                     {
-                        file += "." + DateTime.Now.ToString("yyyyMMdd");
+                        file = Path.Combine(variables.rootfolder, "Console_" + DateTime.Now.ToString("yyyyMMdd") + ".log");
                         File.AppendAllText(file, "\n" + txtConsole.Text);
                     }
                     catch
