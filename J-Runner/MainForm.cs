@@ -40,7 +40,7 @@ namespace JRunner
             XFLASHER_EMMC = 4,
             PICOFLASHER = 5,
         }
-		
+
         public static TextWriter _writer = null;
         public static MainForm mainForm;
         private IDeviceNotifier devNotifier;
@@ -167,11 +167,11 @@ namespace JRunner
             cleanupThread.Start();
 
             printstartuptext(true);
-            
+
             new Thread(check_dash).Start();
 
             deviceinit();
-            
+
             try
             {
                 if (File.Exists(xflasher.svfPath)) File.Delete(xflasher.svfPath);
@@ -701,7 +701,7 @@ namespace JRunner
         }
 
         #region Nand
-        
+
         public Nand.PrivateN getNand()
         {
             return nand;
@@ -732,7 +732,7 @@ namespace JRunner
                 {
                     if (device == DEVICE.PICOFLASHER)
                     {
-                        picoflasher.Read(1, (uint) startblock, (uint) (startblock + length)); // TODO: respect filename
+                        picoflasher.Read(1, (uint)startblock, (uint)(startblock + length)); // TODO: respect filename
                     }
                     else if (device == DEVICE.XFLASHER_SPI)
                     {
@@ -908,7 +908,7 @@ namespace JRunner
             }
             nandTimingFunctionsExecute(function, filename, size, startblock, length, recalcEcc);
         }
-                
+
         private void programTimingFile(string filex)
         {
             string file = "";
@@ -933,7 +933,7 @@ namespace JRunner
                         MessageBox.Show("PicoFlasher can't to program timing", "Can't", MessageBoxButtons.OK, MessageBoxIcon.Error);
                         return;
                     }
-                    else if(device == DEVICE.XFLASHER_SPI)
+                    else if (device == DEVICE.XFLASHER_SPI)
                     {
                         xflasher.flashSvf(file);
                     }
@@ -961,7 +961,7 @@ namespace JRunner
                 }
             }
         }
-        
+
         private NandX.Errors getmbtype()
         {
             Console.WriteLine("Checking Console...");
@@ -1051,7 +1051,7 @@ namespace JRunner
                             xPanel.setMBname(variables.ctype.Text);
                         }
                     }
-                    else if (temp >= 4558 && temp <= 4580) 
+                    else if (temp >= 4558 && temp <= 4580)
                     {
                         if (flashconfig == "01198030")
                         {
@@ -1942,7 +1942,7 @@ namespace JRunner
                 {
                     variables.cpukey = parsecpukey(cpufile);
                 }
-                
+
                 if (variables.cpukey.Length != 32 || !objAlphaPattern.IsMatch(variables.cpukey)) variables.cpukey = "";
 
                 bool foundKey = !string.IsNullOrEmpty(variables.cpukey);
@@ -1951,7 +1951,7 @@ namespace JRunner
                 if (!foundKey)
                 {
                     long filenameKvCrc = Nand.Nand.kvcrc(variables.filename1, true);
-                    
+
                     if (variables.debugMode) Console.WriteLine("KV CRC: {0:X}", filenameKvCrc);
                     if (variables.debugMode) Console.WriteLine("Searching Registry Entrys");
                     try
@@ -2031,7 +2031,7 @@ namespace JRunner
                         else Console.WriteLine("Wrong CPU Key");
                     }
                 }
-                
+
                 nandInfo.setNand(nand);
                 updateProgress((progressBar.Maximum / 4) * 3); // 75%
 
@@ -2103,9 +2103,9 @@ namespace JRunner
                         fs.Read(patchesByte, 0, 0x5B230); // 0x8FFD0 - 0xEB200
                         patchesByte = Nand.Nand.unecc(patchesByte);
                     }
-                    
+
                     byte[] patches = new byte[0x4000];
-                    
+
                     if (nand.bigblock)
                     {
                         for (int i = 0; i < patches.Length; i++)
@@ -2124,20 +2124,20 @@ namespace JRunner
                     // Needs to be run twice for JTAG checking, no reliable way to check which it is
                     PatchParser patchParser = new PatchParser(patches);
                     bool patchResult = patchParser.parseAll();
-                
+
                     if (!patchResult)
                     {
                         patches = new byte[0x4000];
-                
+
                         for (int i = 0; i < patches.Length; i++)
                         {
                             patches[i] = patchesByte[0x59F0 + i]; // JTAG all sizes, 0x913F0
                         }
-                
+
                         patchParser.enterData(patches);
                         patchParser.parseAll();
                     }
-                    
+
                 }
                 catch
                 {
@@ -4367,7 +4367,7 @@ namespace JRunner
                         //PicoFlasherToolStripMenuItem.Visible = false;
                         device = DEVICE.NO_DEVICE;
                     }
-                    else if(e.Device.IdVendor == 0x11d4 && e.Device.IdProduct == 0x8334)
+                    else if (e.Device.IdVendor == 0x11d4 && e.Device.IdProduct == 0x8334)
                     {
                         HID.BootloaderDetected = false;
                         if (!DemoN.DemonDetected) nTools.setImage(null);
@@ -4938,7 +4938,8 @@ namespace JRunner
         {
             if (mode > 0)
             {
-                ProgressLabel.BeginInvoke(new Action(() => {
+                ProgressLabel.BeginInvoke(new Action(() =>
+                {
                     if (mode == 3) ProgressLabel.Text = "Erasing";
                     else if (mode == 2) ProgressLabel.Text = "Writing";
                     else if (mode == 1) ProgressLabel.Text = "Reading";
@@ -4952,7 +4953,8 @@ namespace JRunner
             else if (mode == -1)
             {
                 ProgressLabel.BeginInvoke(new Action(() => ProgressLabel.Text = "Progress"));
-                progressBar.BeginInvoke(new Action(() => {
+                progressBar.BeginInvoke(new Action(() =>
+                {
                     progressBar.Style = ProgressBarStyle.Blocks;
                     progressBar.Value = progressBar.Minimum;
                 }));
@@ -4961,7 +4963,8 @@ namespace JRunner
             else
             {
                 ProgressLabel.BeginInvoke(new Action(() => ProgressLabel.Text = "Progress"));
-                progressBar.BeginInvoke(new Action(() => {
+                progressBar.BeginInvoke(new Action(() =>
+                {
                     progressBar.Style = ProgressBarStyle.Blocks;
                     progressBar.Value = progressBar.Maximum;
                 }));
@@ -5002,7 +5005,8 @@ namespace JRunner
         {
             if (mode > 0)
             {
-                ProgressLabel.BeginInvoke(new Action(() => {
+                ProgressLabel.BeginInvoke(new Action(() =>
+                {
                     if (mode == 3) ProgressLabel.Text = "Erasing";
                     else if (mode == 2) ProgressLabel.Text = "Writing";
                     else if (mode == 1) ProgressLabel.Text = "Reading";
@@ -5016,7 +5020,8 @@ namespace JRunner
             else if (mode == -1)
             {
                 ProgressLabel.BeginInvoke(new Action(() => { ProgressLabel.Text = "Progress"; }));
-                progressBar.BeginInvoke(new Action(() => {
+                progressBar.BeginInvoke(new Action(() =>
+                {
                     progressBar.Style = ProgressBarStyle.Blocks;
                     progressBar.Value = progressBar.Minimum;
                 }));
@@ -5025,7 +5030,8 @@ namespace JRunner
             else
             {
                 ProgressLabel.BeginInvoke(new Action(() => { ProgressLabel.Text = "Progress"; }));
-                progressBar.BeginInvoke(new Action(() => {
+                progressBar.BeginInvoke(new Action(() =>
+                {
                     progressBar.Style = ProgressBarStyle.Blocks;
                     progressBar.Value = progressBar.Maximum;
                 }));
@@ -5107,5 +5113,48 @@ namespace JRunner
         }
 
         #endregion
+
+        private void gB16MBToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            
+
+            if (variables.filename1 == "")
+            {
+
+                MessageBox.Show("Are you serious?", "Can't", MessageBoxButtons.OK, MessageBoxIcon.Error);
+
+            }
+            else
+            {
+                FileStream fs = new FileStream(variables.filename1, FileMode.Open);
+                byte[] noecc_data = new byte[0x01000000];
+                byte[] ecc_data = new byte[0x01080000];
+                fs.Position = 0;
+
+                switch (variables.ctype.Text)
+                {
+                    case "Corona 4GB":
+                        fs.Read(noecc_data, 0, 0x01000000);
+
+                        //byte array of first 0x01000000 in 4GB Corona NAND, add ecc true, block start 0, layout 1.
+                        this.BeginInvoke(new Action(() =>
+
+                        ecc_data = Nand.Nand.addecc_v2(noecc_data, true, 0, 1)
+                        
+                        ));
+                        Console.WriteLine("Aligning NAND to 16MB. Please do not interact with JRunner");
+                        
+                        File.WriteAllBytes(variables.filename1.Substring(0, variables.filename1.Length - 4) + "_aligned.bin", ecc_data);
+
+                        fs.Close();
+                        break;
+                    default:
+                        break;
+
+                }
+            }
+        
+        }
+
     }
 }
