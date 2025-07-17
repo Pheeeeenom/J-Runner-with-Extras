@@ -3481,53 +3481,108 @@ namespace JRunner.Nand
             //Console.WriteLine("\r100%");
             return result;
         }
-        public static byte[] addecc_v2(byte[] image, bool addecc, int blockstart, int layout)
+        public static byte[] addecc_v2(byte[] image,bool addecc,int blockstart,int layout)
         {
-            //int counter = 0;
-            if (variables.extractfiles) Oper.savefile(image, "test.bin");
-            if (variables.debugMode) Console.WriteLine("blockstart: {0:X}, layout: {1}", blockstart / 0x4200, layout);
+            return addecc_v2_internal(image, addecc, blockstart, layout, null);
+        }
+
+        public static byte[] addecc_v2(byte[] image,bool addecc,int blockstart,int layout,IProgress<int> progress)
+        {
+            return addecc_v2_internal(image, addecc, blockstart, layout, progress);
+        }
+        public static byte[] addecc_v2_internal(byte[] image, bool addecc, int blockstart, int layout, IProgress<int> progress)
+        {
+            if (variables.extractfiles)
+                Oper.savefile(image, "test.bin");
+
+            if (variables.debugMode)
+                Console.WriteLine("blockstart: {0:X}, layout: {1}", blockstart / 0x4200, layout);
+
             if (!addecc)
             {
-                if (hasecc(image)) unecc(ref image);
+                if (hasecc(image))
+                    unecc(ref image);
             }
-            int datalen = image.Length;
-            byte[] d, data = image, result = { };
-            for (int i = 0; i < datalen / 0x200; i++)
+
+            int pageSize = 0x200;
+            int spareSize = 0x10;
+            int pageWithSpareSize = 0x210;
+
+            int totalPages = (int)Math.Ceiling(image.Length / (double)pageSize);
+            byte[] result = new byte[totalPages * pageWithSpareSize];
+
+            byte[] sparedata = new byte[spareSize];
+            int blockNumberBase = blockstart / 0x4200;
+
+            int readOffset = 0;
+            int writeOffset = 0;
+
+            for (int i = 0; i < totalPages; i++)
             {
-                byte[] sparedata = new byte[0x10];
-                d = Oper.returnportion(Oper.padto(data, 0x00, 0x200), 0, 0x200);
-                data = Oper.returnportion(data, 0x200, data.Length - 0x200);
+                // extract next 0x200 bytes
+                byte[] dataBlock;
+                int bytesRemaining = image.Length - readOffset;
+
+                if (bytesRemaining > 0)
+                {
+                    int bytesToCopy = Math.Min(pageSize, bytesRemaining);
+                    dataBlock = Oper.padto(
+                        Oper.returnportion(ref image, readOffset, bytesToCopy),
+                        0x00,
+                        pageSize
+                    );
+                    readOffset += bytesToCopy;
+                }
+                else
+                {
+                    dataBlock = Oper.padto(new byte[0], 0x00, pageSize);
+                }
+
+                Array.Clear(sparedata, 0, spareSize);
+
                 switch (layout)
                 {
                     case 0:
                         sparedata[5] = 0xFF;
-                        sparedata[0] = (byte)(((i / 32) + (blockstart / 0x4200)) & 0xFF);
-                        sparedata[1] = (byte)(((i / 32) + (blockstart / 0x4200)) / 0x100);
+                        sparedata[0] = (byte)(((i / 32) + blockNumberBase) & 0xFF);
+                        sparedata[1] = (byte)(((i / 32) + blockNumberBase) / 0x100);
                         break;
                     case 1:
                         sparedata[5] = 0xFF;
-                        sparedata[1] = (byte)(((i / 32) + (blockstart / 0x4200)) & 0xFF);
-                        sparedata[2] = (byte)(((i / 32) + (blockstart / 0x4200)) / 0x100);
+                        sparedata[1] = (byte)(((i / 32) + blockNumberBase) & 0xFF);
+                        sparedata[2] = (byte)(((i / 32) + blockNumberBase) / 0x100);
                         break;
                     case 2:
                         sparedata[0] = 0xFF;
                         sparedata[1] = (byte)(((i / 0x100) + (blockstart / 0x21000)) & 0xFF);
                         sparedata[2] = (byte)((((i / 0x100) + (blockstart / 0x21000)) & 0xFF00) >> 8);
                         break;
-                    default:
-                        break;
                 }
 
-                d = Oper.addtoflash_v2(d, sparedata);
+                // Combine data + spare
+                byte[] pagePlusSpare = new byte[pageWithSpareSize];
+                Buffer.BlockCopy(dataBlock, 0, pagePlusSpare, 0, pageSize);
+                Buffer.BlockCopy(sparedata, 0, pagePlusSpare, pageSize, spareSize);
+
+                // ECC
+                byte[] pageWithECC;
                 try
                 {
-                    d = calcecc(d);
+                    pageWithECC = calcecc(pagePlusSpare);
                 }
-                catch (System.IndexOutOfRangeException) { Oper.ByteArrayToString(d); }
-                result = Oper.addtoflash_v2(result, d);
+                catch (IndexOutOfRangeException)
+                {
+                    Oper.ByteArrayToString(pagePlusSpare);
+                    throw;
+                }
+
+                Buffer.BlockCopy(pageWithECC, 0, result, writeOffset, pageWithECC.Length);
+                writeOffset += pageWithECC.Length;
             }
+
             return result;
         }
+
 
         private static byte[] calcecc(byte[] data)
         {

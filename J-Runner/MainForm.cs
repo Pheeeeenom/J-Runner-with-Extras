@@ -17,6 +17,7 @@ using System.Security.Principal;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
+using System.Threading.Tasks;
 using System.Windows.Forms;
 using WinUsb;
 using OpenFileDialog = System.Windows.Forms.OpenFileDialog;
@@ -5114,46 +5115,47 @@ namespace JRunner
 
         #endregion
 
-        private void gB16MBToolStripMenuItem_Click(object sender, EventArgs e)
+        private async void gB16MBToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            
-
-            if (variables.filename1 == "")
+            if (string.IsNullOrEmpty(variables.filename1))
             {
-
-                MessageBox.Show("Are you serious?", "Can't", MessageBoxButtons.OK, MessageBoxIcon.Error);
-
+                MessageBox.Show("Select a file first.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
             }
-            else
+
+            const int sixteenMB = 0x01000000;
+            byte[] sixteenMBdata;
+
+            using (FileStream fs = new FileStream(variables.filename1, FileMode.Open, FileAccess.Read))
             {
-                FileStream fs = new FileStream(variables.filename1, FileMode.Open);
-                byte[] noecc_data = new byte[0x01000000];
-                byte[] ecc_data = new byte[0x01080000];
-                fs.Position = 0;
+                sixteenMBdata = new byte[sixteenMB];
+                int bytesRead = fs.Read(sixteenMBdata, 0, sixteenMB);
 
-                switch (variables.ctype.Text)
+                if (bytesRead < sixteenMB)
                 {
-                    case "Corona 4GB":
-                        fs.Read(noecc_data, 0, 0x01000000);
-
-                        //byte array of first 0x01000000 in 4GB Corona NAND, add ecc true, block start 0, layout 1.
-                        this.BeginInvoke(new Action(() =>
-
-                        ecc_data = Nand.Nand.addecc_v2(noecc_data, true, 0, 1)
-                        
-                        ));
-                        Console.WriteLine("Aligning NAND to 16MB. Please do not interact with JRunner");
-                        
-                        File.WriteAllBytes(variables.filename1.Substring(0, variables.filename1.Length - 4) + "_aligned.bin", ecc_data);
-
-                        fs.Close();
-                        break;
-                    default:
-                        break;
-
+                    for (int i = bytesRead; i < sixteenMB; i++)
+                        sixteenMBdata[i] = 0x00;
                 }
             }
-        
+
+          
+
+            byte[] eccAligned = await Task.Run(() =>
+                Nand.Nand.addecc_v2(sixteenMBdata, true, 0, 1)
+            );
+
+            string outputFile = Path.Combine(
+                Path.GetDirectoryName(variables.filename1),
+                Path.GetFileNameWithoutExtension(variables.filename1) + "_aligned.bin"
+            );
+
+            File.WriteAllBytes(outputFile, eccAligned);
+
+            
+
+            MessageBox.Show("Done! Please check the location of your original file.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+            
         }
 
     }
