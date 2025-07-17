@@ -3028,7 +3028,48 @@ namespace JRunner
         #endregion
 
         #region Nand
+        private async void gB16MBToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (string.IsNullOrEmpty(variables.filename1))
+            {
+                MessageBox.Show("Select a file first.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
 
+            const int sixteenMB = 0x01000000;
+            byte[] sixteenMBdata;
+
+            using (FileStream fs = new FileStream(variables.filename1, FileMode.Open, FileAccess.Read))
+            {
+                sixteenMBdata = new byte[sixteenMB];
+                int bytesRead = fs.Read(sixteenMBdata, 0, sixteenMB);
+
+                if (bytesRead < sixteenMB)
+                {
+                    for (int i = bytesRead; i < sixteenMB; i++)
+                        sixteenMBdata[i] = 0x00;
+                }
+            }
+
+
+
+            byte[] eccAligned = await Task.Run(() =>
+                Nand.Nand.addecc_v2(sixteenMBdata, true, 0, 1)
+            );
+
+            string outputFile = Path.Combine(
+                Path.GetDirectoryName(variables.filename1),
+                Path.GetFileNameWithoutExtension(variables.filename1) + "_aligned.bin"
+            );
+
+            File.WriteAllBytes(outputFile, eccAligned);
+
+
+
+            MessageBox.Show("Done! Please check the location of your original file.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+
+        }
         private void extractFilesToolStripMenuItem_Click(object sender, EventArgs e)
         {
             extractFilesFromNand();
@@ -5115,48 +5156,7 @@ namespace JRunner
 
         #endregion
 
-        private async void gB16MBToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            if (string.IsNullOrEmpty(variables.filename1))
-            {
-                MessageBox.Show("Select a file first.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                return;
-            }
-
-            const int sixteenMB = 0x01000000;
-            byte[] sixteenMBdata;
-
-            using (FileStream fs = new FileStream(variables.filename1, FileMode.Open, FileAccess.Read))
-            {
-                sixteenMBdata = new byte[sixteenMB];
-                int bytesRead = fs.Read(sixteenMBdata, 0, sixteenMB);
-
-                if (bytesRead < sixteenMB)
-                {
-                    for (int i = bytesRead; i < sixteenMB; i++)
-                        sixteenMBdata[i] = 0x00;
-                }
-            }
-
-          
-
-            byte[] eccAligned = await Task.Run(() =>
-                Nand.Nand.addecc_v2(sixteenMBdata, true, 0, 1)
-            );
-
-            string outputFile = Path.Combine(
-                Path.GetDirectoryName(variables.filename1),
-                Path.GetFileNameWithoutExtension(variables.filename1) + "_aligned.bin"
-            );
-
-            File.WriteAllBytes(outputFile, eccAligned);
-
-            
-
-            MessageBox.Show("Done! Please check the location of your original file.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
-
-            
-        }
+        
 
     }
 }
