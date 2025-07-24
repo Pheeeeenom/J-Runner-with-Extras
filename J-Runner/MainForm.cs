@@ -13,6 +13,7 @@ using System.Linq;
 using System.Management;
 using System.Media;
 using System.Reflection;
+using System.Security.Policy;
 using System.Security.Principal;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -2468,7 +2469,7 @@ namespace JRunner
             // 1 = Trinity
             // 10, 11 = Corona
             // 15, 16 = Winchester 
-            if (variables.ctype.ID == 1  ||
+            if (variables.ctype.ID == 1 ||
                 variables.ctype.ID == 10 || variables.ctype.ID == 11 ||
                 variables.ctype.ID == 15 || variables.ctype.ID == 16)
             {
@@ -5154,9 +5155,10 @@ namespace JRunner
             return txtCPUKey.Text;
         }
 
+
+
         #endregion
 
         
-
     }
 }
